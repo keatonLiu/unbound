@@ -407,7 +407,7 @@ find_NS(struct reply_info* rep, size_t from, size_t to)
 	}
 	return NULL;
 }
-
+ 
 struct delegpt* 
 delegpt_from_message(struct dns_msg* msg, struct regional* region)
 {
@@ -422,7 +422,7 @@ delegpt_from_message(struct dns_msg* msg, struct regional* region)
 	 * NS set for the "referral" might be in the answer section. */
 	if(!ns_rrset)
 		ns_rrset = find_NS(msg->rep, 0, msg->rep->an_numrrsets);
-	
+		
 	/* If there was no NS rrset in the authority section, then this 
 	 * wasn't a referral message. (It might not actually be a 
 	 * referral message anyway) */

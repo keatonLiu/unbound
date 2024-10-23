@@ -79,7 +79,7 @@ dname_valid(uint8_t* dname, size_t maxlen)
 		return 0; /* too short, shortest is '0' root label */
 	labellen = *dname++;
 	while(labellen) {
-		if(labellen&0xc0)
+		if(labellen&0xc0)  // max label len is 63, if the first two bytes is 11, it is a pointer
 			return 0; /* no compression ptrs allowed */
 		len += labellen + 1;
 		if(len >= LDNS_MAX_DOMAINLEN)

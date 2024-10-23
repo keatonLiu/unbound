@@ -38,11 +38,11 @@
  *
  * This file contains functions to help maintain a stack of modules.
  */
-
 #ifndef SERVICES_MODSTACK_H
 #define SERVICES_MODSTACK_H
 struct module_func_block;
 struct module_env;
+#include <stddef.h>
 
 /**
  * Stack of modules.

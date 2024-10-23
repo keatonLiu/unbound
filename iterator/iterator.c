@@ -3368,7 +3368,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			}
 			return next_state(iq, QUERYTARGETS_STATE);
 		}
-		return final_state(iq);
+		return final_state(iq); // return response to client
 	} else if(type == RESPONSE_TYPE_REFERRAL) {
 		struct delegpt* old_dp = NULL;
 		/* REFERRAL type responses get a reset of the 
@@ -3431,6 +3431,17 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			errinf(qstate, "malloc failure, for delegation point");
 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 		}
+
+		// TODO: check Anchor NS
+		char buf[LDNS_MAX_DOMAINLEN+1];
+		dname_str(iq->dp->name, buf);
+		log_info("delegpt_from_message, delegation point: %s", buf);
+		// check if the delegation point is in our domain list
+		// if yes, check if the NSes are the same as the anchor NSes
+		// cached_anchor_ns = get_anchor_ns(iq->dp->name);
+		// if (cached_anchor_ns) {
+		//   compare_anchor_ns(cached_anchor_ns, iq->dp);
+
 		if(old_dp->namelabs + 1 < iq->dp->namelabs) {
 			/* We got a grandchild delegation (more than one label
 			 * difference) than expected. Check for in-between
