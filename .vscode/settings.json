@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "config.h": "c",
+        "cstdlib": "c",
+        "alloc.h": "c",
+        "anchor_ns.h": "c",
+        "set.h": "c"
     }
 }

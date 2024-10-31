@@ -225,7 +225,7 @@ delegpt_add_addr(struct delegpt* dp, struct regional* region,
 		return 0;
 	a->next_target = dp->target_list;
 	dp->target_list = a;
-	a->next_result = 0;
+	a->next_result = NULL;
 	a->next_usable = dp->usable_list;
 	dp->usable_list = a;
 	memcpy(&a->addr, addr, addrlen);

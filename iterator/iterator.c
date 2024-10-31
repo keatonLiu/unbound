@@ -3424,6 +3424,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 		iq->deleg_msg = iq->response;
 		/* Keep current delegation point for label comparison */
 		old_dp = iq->dp;
+		// 这里也会从响应中取出glue
 		iq->dp = delegpt_from_message(iq->response, qstate->region);
 		if (qstate->env->cfg->qname_minimisation)
 			iq->minimisation_state = INIT_MINIMISE_STATE;
@@ -3431,16 +3432,6 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			errinf(qstate, "malloc failure, for delegation point");
 			return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 		}
-
-		// TODO: check Anchor NS
-		char buf[LDNS_MAX_DOMAINLEN+1];
-		dname_str(iq->dp->name, buf);
-		log_info("delegpt_from_message, delegation point: %s", buf);
-		// check if the delegation point is in our domain list
-		// if yes, check if the NSes are the same as the anchor NSes
-		// cached_anchor_ns = get_anchor_ns(iq->dp->name);
-		// if (cached_anchor_ns) {
-		//   compare_anchor_ns(cached_anchor_ns, iq->dp);
 
 		if(old_dp->namelabs + 1 < iq->dp->namelabs) {
 			/* We got a grandchild delegation (more than one label
@@ -3466,6 +3457,18 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			iter_merge_retry_counts(iq->dp, iq->store_parent_NS,
 				ie->outbound_msg_retry);
 		delegpt_log(VERB_ALGO, iq->dp);
+
+		// TODO: check Anchor NS
+		char buf[LDNS_MAX_DOMAINLEN+1];
+		dname_str(iq->dp->name, buf);
+		log_info("delegpt_from_message, delegation point: %s", buf);
+		
+		// check if the delegation point is in our domain list
+		// if yes, check if the NSes are the same as the anchor NSes
+		// cached_anchor_ns = get_anchor_ns(iq->dp->name);
+		// if (cached_anchor_ns) {
+		//   compare_anchor_ns(cached_anchor_ns, iq->dp);
+
 		/* Count this as a referral. */
 		iq->referral_count++;
 		iq->sent_count = 0;
