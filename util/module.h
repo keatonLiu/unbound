@@ -156,6 +156,7 @@
 #include "util/storage/lruhash.h"
 #include "util/data/msgreply.h"
 #include "util/data/msgparse.h"
+#include "services/cache/anchor_ns.h"
 struct sldns_buffer;
 struct alloc_cache;
 struct rrset_cache;
@@ -345,6 +346,8 @@ struct module_env {
 	struct infra_cache* infra_cache;
 	/** shared key cache */
 	struct key_cache* key_cache;
+	/** anchor ns cache */
+	struct anchor_ns_cache* anchor_ns_cache;
 
 	/* --- services --- */
 	/** 

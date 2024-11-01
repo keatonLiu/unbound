@@ -2,8 +2,11 @@
 #include "anchor_ns.h"
 #include "iterator/iter_delegpt.h"
 #include "util/log.h"
+#include "util/data/msgreply.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "util/net_help.h"
+#include <netinet/in.h>
 
 struct anchor_ns_cache *anchor_ns_cache_create()
 {
@@ -12,9 +15,26 @@ struct anchor_ns_cache *anchor_ns_cache_create()
         log_warn("anchor_ns_cache: memory allocation failed");
         return NULL;
     }
+    cache->zones = (SimpleSet *)calloc(1, sizeof(SimpleSet));
+    if (!cache->zones) {
+        log_warn("anchor_ns_cache->zones: memory allocation failed");
+        free(cache);
+        return NULL;
+    }
+    set_init(cache->zones); // string comparison
+    return cache;
+}
+
+struct anchor_ns_set *anchor_ns_set_create()
+{
+    struct anchor_ns_set *cache = (struct anchor_ns_set *)calloc(1, sizeof(struct anchor_ns_set));
+    if (!cache) {
+        log_warn("anchor_ns_set: memory allocation failed");
+        return NULL;
+    }
     cache->nss = (SimpleSet *)calloc(1, sizeof(SimpleSet));
     if (!cache->nss) {
-        log_warn("anchor_ns_cache->nss: memory allocation failed");
+        log_warn("anchor_ns_set->nss: memory allocation failed");
         free(cache);
         return NULL;
     }
@@ -22,7 +42,7 @@ struct anchor_ns_cache *anchor_ns_cache_create()
     return cache;
 }
 
-struct anchor_ns *anchor_ns_create(const char *name, const char *ip)
+struct anchor_ns *anchor_ns_create(const char *name)
 {
     struct anchor_ns *a = (struct anchor_ns *)malloc(sizeof(struct anchor_ns));
     if (!a) {
@@ -35,30 +55,26 @@ struct anchor_ns *anchor_ns_create(const char *name, const char *ip)
         return NULL;
     }
     strcpy(a->name, name);
-    a->ip = (const char *)calloc(strlen(ip) + 1, sizeof(char));
-    if (!a->ip) {
-        log_warn("anchor_ns->ip: memory allocation failed");
-        free(a->name);
+    a->ips = (SimpleSet *)calloc(1, sizeof(SimpleSet));
+    if (!a->ips) {
+        log_warn("anchor_ns->ips: memory allocation failed");
+        free((void *)a->name);
         free(a);
         return NULL;
     }
-    strcpy(a->ip, ip);
+    set_init(a->ips); // string comparison
+    return a;
 }
 
 static uint64_t anchor_ns_hash(const char *key)
 {
     struct anchor_ns *ns = (struct anchor_ns *)key;
-    size_t len = strlen(ns->name) + strlen(ns->ip) + 1;
-    char buf[len + 1];
-    snprintf(buf, sizeof(buf), "%s-%s", ns->name, ns->ip);
+    return default_hash(ns->name);
+}
 
-    size_t i;
-    uint64_t h = 14695981039346656037ULL; // FNV_OFFSET 64 bit
-    for (i = 0; i < len; ++i) {
-        h = h ^ (unsigned char)buf[i];
-        h = h * 1099511628211ULL; // FNV_PRIME 64 bit
-    }
-    return h;
+static uint64_t anchor_ns_set_hash(const char* key) {
+    struct anchor_ns_set *ns = (struct anchor_ns_set *)key;
+    return default_hash(ns->zone);
 }
 
 void to_fqdn(char *domain)
@@ -98,31 +114,31 @@ int in_anchor_zones_list(const char *zonefile, const char *zone)
     return 0; // 没有找到匹配行
 }
 
-int compare_anchor_ns_cache(struct anchor_ns_cache *parent, struct anchor_ns_cache *child)
+int compare_anchor_ns_set(struct anchor_ns_set *parent, struct anchor_ns_set *child)
 {
     if (parent == NULL) {
-        log_warn("parent anchor_ns_cache is NULL");
-        return 1;
+        log_warn("parent anchor_ns_set is NULL");
+        return 0;
     }
 
     if (child == NULL) {
-        log_warn("child anchor_ns_cache is NULL");
-        return 1;
+        log_warn("child anchor_ns_set is NULL");
+        return 0;
     }
 
     if (parent->nss == NULL || child->nss == NULL) {
-        log_warn("parent or child anchor_ns_cache->nss is NULL");
-        return 1;
+        log_warn("parent or child anchor_ns_set->nss is NULL");
+        return 0;
     }
 
     int cmp = set_cmp(parent->nss, child->nss);
     if (cmp == SET_EQUAL) {
-        log_info("anchor_ns_cache: parent and child NSs are equal");
+        log_info("anchor_ns_set: parent and child NSs are equal");
         log_anchor_ns_set(parent->nss);
         return 0;
     }
 
-    log_warn("anchor_ns_cache: parent and child NSs are not equal");
+    log_warn("anchor_ns_set: parent and child NSs are not equal");
     log_warn("Old NSs:");
     uint64_t i;
     log_anchor_ns_set(parent->nss);
@@ -133,13 +149,86 @@ int compare_anchor_ns_cache(struct anchor_ns_cache *parent, struct anchor_ns_cac
     return 1;
 }
 
-void log_anchor_ns_set(const SimpleSet *set)
+void log_anchor_ns_set(const struct anchor_ns_set *cache)
 {
     uint64_t i;
-    for (i = 0; i < set->number_nodes; ++i) {
-        if (set->nodes[i] != NULL) {
-            const struct anchor_ns *ns = (const struct anchor_ns *)set->nodes[i]->_key;
-            log_warn("NS: %s, IP: %s", ns->name, ns->ip);
+    log_info("NSs for zone: %s", cache->zone);
+    for (i = 0; i < cache->nss->number_nodes; ++i) {
+        if (cache->nss->nodes[i] != NULL) {
+            log_anchor_ns((const struct anchor_ns*)cache->nss->nodes[i]);
         }
     }
+}
+
+void log_anchor_ns(const struct anchor_ns *ns) {
+    uint64_t i;
+    log_info("NS: %s", ns->name);
+    for (i = 0; i < ns->ips->number_nodes; ++i) {
+        if (ns->ips->nodes[i] != NULL) {
+            log_info(" - IP: %s", (const char *)ns->ips->nodes[i]);
+        }
+    }
+}
+
+struct anchor_ns_set *anchor_ns_set_from_rep(struct reply_info *rep)
+{
+    struct anchor_ns_set *set = anchor_ns_set_create();
+    if (set == NULL) {
+        return NULL;
+    }
+
+    size_t i;
+    for (i= rep->an_numrrsets; i<rep->an_numrrsets+rep->ns_numrrsets; i++) {
+        struct ub_packed_rrset_key *rrset = rep->rrsets[i];
+        struct packed_rrset_data *data = (struct packed_rrset_data *)rrset->entry.data;
+        size_t j;
+        uint16_t type = ntohs(rrset->rk.type);
+        if (type == LDNS_RR_TYPE_NS) {
+            for (j = 0; j < data->count; j++) {
+                char *name = (char *)data->rr_data[j];
+                struct anchor_ns *ns = anchor_ns_create(name);
+                if (ns == NULL) {
+                    log_warn("Failed to create anchor_ns");
+                    return NULL;
+                }
+                set_insert(set->nss, ns);
+            }
+        }
+    }
+
+    // add ips to anchor_ns from parent side glue
+    for (i = 0; i < rep->rrset_count; i++) {
+        /* skip auth section. FIXME really needed?*/
+        if(rep->an_numrrsets <= i && 
+			i < (rep->an_numrrsets+rep->ns_numrrsets))
+			continue;
+        struct ub_packed_rrset_key *rrset = rep->rrsets[i];
+        struct packed_rrset_data *data = (struct packed_rrset_data *)rrset->entry.data;
+        size_t j;
+        uint16_t type = ntohs(rrset->rk.type);
+        if (type == LDNS_RR_TYPE_A) {
+            for (j = 0; j < data->count; j++) {
+                if(data->rr_len[i] != 2 + INET_SIZE)
+                    continue;
+                struct sockaddr_in sa;
+                memmove(&sa.sin_addr, data->rr_data[i]+2, INET_SIZE);
+                char dest[100];
+                inet_ntop(AF_INET, &sa.sin_addr, dest, (socklen_t)sizeof(dest));
+                char *ip = calloc(strlen(dest) + 1, sizeof(char));
+                if (ip == NULL) {
+                    log_warn("Failed to allocate memory for ip");
+                    return NULL;
+                }
+                strcpy(ip, dest);
+                struct anchor_ns *ns = anchor_ns_create((const char *)rrset->rk.dname);
+                if (ns == NULL) {
+                    log_warn("Failed to create anchor_ns");
+                    return NULL;
+                }
+                set_insert(ns->ips, ip);
+            }
+        }
+    }
+
+    return set;
 }

@@ -16,7 +16,6 @@
 #define MAX_FULLNESS_PERCENT 0.25       /* arbitrary */
 
 /* PRIVATE FUNCTIONS */
-static uint64_t __default_hash(const char *key);
 static int __get_index(SimpleSet *set, const char *key, uint64_t hash, uint64_t *index);
 static int __assign_node(SimpleSet *set, const char *key, uint64_t hash, uint64_t index);
 static void __free_index(SimpleSet *set, uint64_t index);
@@ -39,7 +38,7 @@ int set_init_alt(SimpleSet *set, uint64_t num_els, set_hash_function hash) {
         set->nodes[i] = NULL;
     }
     set->used_nodes = 0;
-    set->hash_function = (hash == NULL) ? &__default_hash : hash;
+    set->hash_function = (hash == NULL) ? &default_hash : hash;
     return SET_TRUE;
 }
 
@@ -224,7 +223,7 @@ int set_cmp(SimpleSet *left, SimpleSet *right) {
 /*******************************************************************************
 ***        PRIVATE FUNCTIONS
 *******************************************************************************/
-static uint64_t __default_hash(const char *key) {
+static uint64_t default_hash(const char *key) {
     // FNV-1a hash (http://www.isthe.com/chongo/tech/comp/fnv/)
     size_t i, len = strlen(key);
     uint64_t h = 14695981039346656037ULL; // FNV_OFFSET 64 bit

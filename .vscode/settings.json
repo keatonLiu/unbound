@@ -5,6 +5,8 @@
         "cstdlib": "c",
         "alloc.h": "c",
         "anchor_ns.h": "c",
-        "set.h": "c"
+        "set.h": "c",
+        "slabhash.h": "c",
+        "stdio.h": "c"
     }
 }
