@@ -72,6 +72,11 @@ int set_contains(SimpleSet *set, const char *key) {
     return __get_index(set, key, hash, &index);
 }
 
+int set_get(SimpleSet *set, const char *key, uint64_t *index) {
+    uint64_t hash = set->hash_function(key);
+    return __get_index(set, key, hash, index);
+}
+
 int set_remove(SimpleSet *set, const char *key) {
     uint64_t index, hash = set->hash_function(key);
     int pos = __get_index(set, key, hash, &index);
@@ -219,11 +224,7 @@ int set_cmp(SimpleSet *left, SimpleSet *right) {
     return SET_EQUAL;
 }
 
-
-/*******************************************************************************
-***        PRIVATE FUNCTIONS
-*******************************************************************************/
-static uint64_t default_hash(const char *key) {
+uint64_t default_hash(const char *key) {
     // FNV-1a hash (http://www.isthe.com/chongo/tech/comp/fnv/)
     size_t i, len = strlen(key);
     uint64_t h = 14695981039346656037ULL; // FNV_OFFSET 64 bit
@@ -233,6 +234,9 @@ static uint64_t default_hash(const char *key) {
     }
     return h;
 }
+/*******************************************************************************
+***        PRIVATE FUNCTIONS
+*******************************************************************************/
 
 static int __set_contains(SimpleSet *set, const char *key, uint64_t hash) {
     uint64_t index;

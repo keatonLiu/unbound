@@ -346,7 +346,7 @@ struct module_env {
 	struct infra_cache* infra_cache;
 	/** shared key cache */
 	struct key_cache* key_cache;
-	/** anchor ns cache */
+	/** shared anchor ns cache */
 	struct anchor_ns_cache* anchor_ns_cache;
 
 	/* --- services --- */

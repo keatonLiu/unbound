@@ -187,7 +187,9 @@ char** set_to_array(SimpleSet *set, uint64_t *size);
 */
 int set_cmp(SimpleSet *left, SimpleSet *right);
 
-static uint64_t default_hash(const char *key);
+int set_get(SimpleSet *set, const char *key, uint64_t *index);
+
+uint64_t default_hash(const char *key);
 
 // void set_printf(SimpleSet *set);                                           /* TODO: implement */
 

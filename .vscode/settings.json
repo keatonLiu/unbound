@@ -7,6 +7,16 @@
         "anchor_ns.h": "c",
         "set.h": "c",
         "slabhash.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "localzone.h": "c",
+        "config_file.h": "c",
+        "msgreply.h": "c",
+        "nss.h": "c",
+        "iter_delegpt.h": "c",
+        "log.h": "c",
+        "net_help.h": "c",
+        "in.h": "c",
+        "packed_rrset.h": "c",
+        "dns.h": "c"
     }
 }

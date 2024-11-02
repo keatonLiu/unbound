@@ -81,6 +81,7 @@
 #include "services/listen_dnsport.h"
 #include "services/cache/rrset.h"
 #include "services/cache/infra.h"
+#include "services/cache/anchor_ns.h"
 #include "services/localzone.h"
 #include "services/view.h"
 #include "services/modstack.h"
@@ -1061,4 +1062,8 @@ void daemon_apply_cfg(struct daemon* daemon, struct config_file* cfg)
 	if((daemon->env->infra_cache = infra_adjust(daemon->env->infra_cache,
 		cfg))==0)
 		fatal_exit("malloc failure updating config settings");
+	
+	if ((daemon->env->anchor_ns_cache = anchor_ns_cache_create()) == NULL) {
+		fatal_exit("malloc failure creating anchor_ns_cache");
+	}
 }

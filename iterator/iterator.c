@@ -54,6 +54,7 @@
 #include "services/cache/dns.h"
 #include "services/cache/rrset.h"
 #include "services/cache/infra.h"
+#include "services/cache/anchor_ns.h"
 #include "services/authzone.h"
 #include "util/module.h"
 #include "util/netevent.h"
@@ -3132,6 +3133,35 @@ find_NS(struct reply_info* rep, size_t from, size_t to)
 }
 
 
+int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
+	char zone[LDNS_MAX_DOMAINLEN+1];
+	dname_str(iq->dp->name, zone);
+	log_info("[Anchor NS Check] delegation point: %s", zone);
+	struct anchor_ns_set* new_set = anchor_ns_set_from_rep(zone, iq->response->rep);
+	if (new_set == NULL) {
+		log_err("parse rep to anchor ns set failed");
+		return 0;
+	}
+	log_info("New set from parent: ");
+	anchor_ns_set_log(new_set);
+
+	struct anchor_ns_set *old_set = anchor_ns_cache_get(qstate->env->anchor_ns_cache, zone);
+	if (old_set == NULL) {
+		log_info("[First Time Trust] delegpt not in anchor_ns_cache");
+		set_add(qstate->env->anchor_ns_cache->zones, (const char*)new_set);
+	} else {
+		log_info("[Trust Anchor Check] delegpt in anchor_ns_cache");
+		if (anchor_ns_set_compare(old_set, new_set) == 0) {
+			log_info("[Trust Anchor Check] delegpt not changed");
+			return 1;
+		} else {
+			log_warn("[Trust Anchor Check] delegpt changed");
+		}
+	}
+
+	// TODO: Ask old set to find the real NS set
+}
+
 /** 
  * Process the query response. All queries end up at this state first. This
  * process generally consists of analyzing the response and routing the
@@ -3458,16 +3488,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 				ie->outbound_msg_retry);
 		delegpt_log(VERB_ALGO, iq->dp);
 
-		// TODO: check Anchor NS
-		char buf[LDNS_MAX_DOMAINLEN+1];
-		dname_str(iq->dp->name, buf);
-		log_info("delegpt_from_message, delegation point: %s", buf);
-		
-		// check if the delegation point is in our domain list
-		// if yes, check if the NSes are the same as the anchor NSes
-		// cached_anchor_ns = get_anchor_ns(iq->dp->name);
-		// if (cached_anchor_ns) {
-		//   compare_anchor_ns(cached_anchor_ns, iq->dp);
+		check_anchor_ns(qstate, iq);
 
 		/* Count this as a referral. */
 		iq->referral_count++;
