@@ -68,6 +68,7 @@
 #include "util/data/packed_rrset.h"
 #include "util/storage/slabhash.h"
 #include "util/storage/dnstree.h"
+#include "util/storage/map.h"
 #include "util/locks.h"
 #include "libunbound/libworker.h"
 #include "libunbound/context.h"
@@ -259,6 +260,8 @@ fptr_whitelist_rbtree_cmp(int (*fptr) (const void *, const void *))
 	else if(fptr == &auth_zone_cmp) return 1;
 	else if(fptr == &auth_data_cmp) return 1;
 	else if(fptr == &auth_xfer_cmp) return 1;
+	else if(fptr == &default_cmp_func_numeric) return 1;
+	else if(fptr == &default_cmp_func_str) return 1;
 #ifdef HAVE_NGTCP2
 	else if(fptr == &doq_conn_cmp) return 1;
 	else if(fptr == &doq_conid_cmp) return 1;

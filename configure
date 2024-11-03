@@ -5577,6 +5577,8 @@ else
     CFLAGS=
   fi
 fi
+
+CFLAGS="-g -O0"
 ac_prog_cc_stdc=no
 if test x$ac_prog_cc_stdc = xno
 then :

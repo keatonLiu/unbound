@@ -17,6 +17,14 @@
         "net_help.h": "c",
         "in.h": "c",
         "packed_rrset.h": "c",
-        "dns.h": "c"
+        "dns.h": "c",
+        "typeinfo": "c",
+        "sbuffer.h": "c",
+        "dname.h": "c",
+        "compare": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "map.h": "c",
+        "rbtree.h": "c"
     }
 }

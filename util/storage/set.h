@@ -30,8 +30,8 @@ extern "C" {
 typedef uint64_t (*set_hash_function) (const char *key);
 
 typedef struct  {
-    char* _key;
     uint64_t _hash;
+    char* _key;
 } SimpleSetNode, simple_set_node;
 
 typedef struct  {

@@ -6,7 +6,7 @@
       {
         "label": "Build",
         "type": "shell",
-        "command": "make && make install",
+        "command": "make -j8 && make install",
         "group": {
           "kind": "build",
           "isDefault": true

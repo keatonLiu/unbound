@@ -102,9 +102,7 @@ char** set_to_array(SimpleSet *set, uint64_t *size) {
     size_t len;
     for (i = 0; i < set->number_nodes; ++i) {
         if (set->nodes[i] != NULL) {
-            len = strlen(set->nodes[i]->_key);
-            results[j] = (char*)calloc(len + 1, sizeof(char));
-            memcpy(results[j], set->nodes[i]->_key, len);
+            results[j] = set->nodes[i]->_key;
             ++j;
         }
     }
@@ -278,12 +276,11 @@ static int __get_index(SimpleSet *set, const char *key, uint64_t hash, uint64_t 
     uint64_t i, idx;
     idx = hash % set->number_nodes;
     i = idx;
-    size_t len = strlen(key);
     while (1) {
         if (set->nodes[i] == NULL) {
             *index = i;
             return SET_FALSE; // not here OR first open slot
-        } else if (hash == set->nodes[i]->_hash && len == strlen(set->nodes[i]->_key) && strncmp(key, set->nodes[i]->_key, len) == 0) {
+        } else if (hash == set->nodes[i]->_hash) {
             *index = i;
             return SET_TRUE;
         }
@@ -296,16 +293,13 @@ static int __get_index(SimpleSet *set, const char *key, uint64_t hash, uint64_t 
 }
 
 static int __assign_node(SimpleSet *set, const char *key, uint64_t hash, uint64_t index) {
-    size_t len = strlen(key);
     set->nodes[index] = (simple_set_node*)malloc(sizeof(simple_set_node));
-    set->nodes[index]->_key = (char*)calloc(len + 1, sizeof(char));
-    memcpy(set->nodes[index]->_key, key, len);
+    set->nodes[index]->_key = (char*)key;
     set->nodes[index]->_hash = hash;
     return SET_TRUE;
 }
 
 static void __free_index(SimpleSet *set, uint64_t index) {
-    free(set->nodes[index]->_key);
     free(set->nodes[index]);
     set->nodes[index] = NULL;
 }

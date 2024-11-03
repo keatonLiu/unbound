@@ -129,7 +129,7 @@ util/shm_side/shm_main.c services/authzone.c \
 util/fptr_wlist.c util/locks.c util/log.c util/mini_event.c util/module.c \
 util/netevent.c util/net_help.c util/random.c util/rbtree.c util/regional.c \
 util/rtt.c util/siphash.c util/edns.c util/storage/dnstree.c util/storage/lookup3.c \
-util/storage/lruhash.c util/storage/slabhash.c util/tcp_conn_limit.c \
+util/storage/lruhash.c util/storage/slabhash.c util/storage/map.c util/tcp_conn_limit.c \
 util/timehist.c util/tube.c util/proxy_protocol.c util/timeval_func.c \
 util/ub_event.c util/ub_event_pluggable.c util/winsock_event.c \
 validator/autotrust.c validator/val_anchor.c validator/validator.c \
@@ -140,7 +140,7 @@ edns-subnet/edns-subnet.c edns-subnet/subnetmod.c \
 edns-subnet/addrtree.c edns-subnet/subnet-whitelist.c \
 $(CACHEDB_SRC) respip/respip.c $(CHECKLOCK_SRC) \
 $(DNSTAP_SRC) $(DNSCRYPT_SRC) $(IPSECMOD_SRC) $(IPSET_SRC)
-COMMON_OBJ_WITHOUT_NETCALL=dns.lo infra.lo rrset.lo anchor_ns.lo dname.lo msgencode.lo set.lo \
+COMMON_OBJ_WITHOUT_NETCALL=dns.lo infra.lo rrset.lo anchor_ns.lo map.lo dname.lo msgencode.lo \
 as112.lo msgparse.lo msgreply.lo packed_rrset.lo iterator.lo iter_delegpt.lo \
 iter_donotq.lo iter_fwd.lo iter_hints.lo iter_priv.lo iter_resptype.lo \
 iter_scrub.lo iter_utils.lo localzone.lo mesh.lo modstack.lo view.lo \
@@ -736,8 +736,8 @@ rrset.lo rrset.o: $(srcdir)/services/cache/rrset.c config.h $(srcdir)/services/c
  $(srcdir)/util/data/msgreply.h $(srcdir)/util/data/msgparse.h $(srcdir)/sldns/pkthdr.h $(srcdir)/util/regional.h \
  $(srcdir)/util/alloc.h $(srcdir)/util/net_help.h
 anchor_ns.lo anchor_ns.o: $(srcdir)/services/cache/anchor_ns.c config.h $(srcdir)/services/cache/anchor_ns.h \
- $(srcdir)/util/storage/set.h $(srcdir)/util/data/msgreply.h $(srcdir)/util/log.h $(srcdir)/util/net_help.h \
- $(srcdir)/iterator/iter_delegpt.h
+ $(srcdir)/util/storage/map.h $(srcdir)/util/data/msgreply.h $(srcdir)/util/log.h $(srcdir)/util/net_help.h \
+ $(srcdir)/iterator/iter_delegpt.h $(srcdir)/util/data/dname.h $(srcdir)/sldns/sbuffer.h
 as112.lo as112.o: $(srcdir)/util/as112.c $(srcdir)/util/as112.h
 dname.lo dname.o: $(srcdir)/util/data/dname.c config.h $(srcdir)/util/data/dname.h \
  $(srcdir)/util/storage/lruhash.h $(srcdir)/util/locks.h $(srcdir)/util/log.h $(srcdir)/util/data/msgparse.h \
@@ -976,7 +976,7 @@ fptr_wlist.lo fptr_wlist.o: $(srcdir)/util/fptr_wlist.c config.h $(srcdir)/util/
  $(srcdir)/validator/val_nsec3.h $(srcdir)/validator/val_sigcrypt.h $(srcdir)/validator/val_kentry.h \
  $(srcdir)/validator/val_neg.h $(srcdir)/validator/autotrust.h $(srcdir)/libunbound/libworker.h \
  $(srcdir)/libunbound/context.h $(srcdir)/util/alloc.h $(srcdir)/libunbound/unbound-event.h \
- $(srcdir)/libunbound/worker.h
+ $(srcdir)/libunbound/worker.h $(srcdir)/util/storage/map.h
 locks.lo locks.o: $(srcdir)/util/locks.c config.h $(srcdir)/util/locks.h $(srcdir)/util/log.h
 log.lo log.o: $(srcdir)/util/log.c config.h $(srcdir)/util/log.h $(srcdir)/util/locks.h $(srcdir)/sldns/sbuffer.h
 mini_event.lo mini_event.o: $(srcdir)/util/mini_event.c config.h $(srcdir)/util/mini_event.h $(srcdir)/util/rbtree.h \
@@ -1046,7 +1046,9 @@ lruhash.lo lruhash.o: $(srcdir)/util/storage/lruhash.c config.h $(srcdir)/util/s
  $(srcdir)/libunbound/unbound.h $(srcdir)/respip/respip.h
 slabhash.lo slabhash.o: $(srcdir)/util/storage/slabhash.c config.h $(srcdir)/util/storage/slabhash.h \
  $(srcdir)/util/storage/lruhash.h $(srcdir)/util/locks.h $(srcdir)/util/log.h
-set.lo set.o: $(srcdir)/util/storage/set.c config.h $(srcdir)/util/storage/set.h
+
+map.lo map.o: $(srcdir)/util/storage/map.c config.h $(srcdir)/util/storage/map.h
+
 tcp_conn_limit.lo tcp_conn_limit.o: $(srcdir)/util/tcp_conn_limit.c config.h $(srcdir)/util/regional.h \
  $(srcdir)/util/log.h $(srcdir)/util/config_file.h $(srcdir)/util/net_help.h $(srcdir)/util/tcp_conn_limit.h \
  $(srcdir)/util/storage/dnstree.h $(srcdir)/util/rbtree.h $(srcdir)/util/locks.h $(srcdir)/services/localzone.h \

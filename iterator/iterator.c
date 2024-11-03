@@ -3136,6 +3136,10 @@ find_NS(struct reply_info* rep, size_t from, size_t to)
 int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
 	char zone[LDNS_MAX_DOMAINLEN+1];
 	dname_str(iq->dp->name, zone);
+	if (!in_anchor_zones_list(qstate->env->cfg->anchor_zones_file, zone)) {
+		return 1;
+	}
+
 	log_info("[Anchor NS Check] delegation point: %s", zone);
 	struct anchor_ns_set* new_set = anchor_ns_set_from_rep(zone, iq->response->rep);
 	if (new_set == NULL) {
@@ -3151,7 +3155,7 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
 		anchor_ns_cache_set(qstate->env->anchor_ns_cache, new_set);
 	} else {
 		log_info("[Trust Anchor Check] delegpt in anchor_ns_cache");
-		if (anchor_ns_set_compare(old_set, new_set) == 0) {
+		if (anchor_ns_set_equal(old_set, new_set)) {
 			log_info("[Trust Anchor Check] delegpt not changed");
 			return 1;
 		} else {
