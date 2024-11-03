@@ -417,6 +417,7 @@ config_create(void)
 	cfg->iter_scrub_ns = 20;
 	cfg->iter_scrub_cname = 11;
 	cfg->max_global_quota = 128;
+	cfg->anchor_zones_file = NULL;
 	return cfg;
 error_exit:
 	config_delete(cfg);

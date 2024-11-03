@@ -89,10 +89,10 @@ uint64_t anchor_ns_set_hash(const char* key) {
 void to_fqdn(char *domain) {
     size_t len = strlen(domain);
 
-    // 检查域名末尾是否已经有 '.'
+    // Check if domain already has a '.' at the end
     if (len > 0 && domain[len - 1] != '.') {
-        // 在末尾添加 '.' 转为 FQDN
-        if (len < 255) { // 防止越界，符合 DNS 最大长度
+        // Add a '.' at the end
+        if (len < 255) { 
             domain[len] = '.';
             domain[len + 1] = '\0';
         }
@@ -103,22 +103,20 @@ int in_anchor_zones_list(const char *zonefile, const char *zone) {
     FILE *file = fopen(zonefile, "r");
     if (file == NULL) {
         perror("Failed to open file");
-        return -1; // 打开文件失败
+        return -1;
     }
     char line[256];
     while (fgets(line, sizeof(line), file) != NULL) {
-        // 移除读取行末尾的换行符
         line[strcspn(line, "\n")] = '\0';
         to_fqdn(line);
-        // 比较读取的行和传入的 zone
         if (strcmp(line, zone) == 0) {
             fclose(file);
-            return 1; // 找到匹配行
+            return 1; 
         }
     }
 
     fclose(file);
-    return 0; // 没有找到匹配行
+    return 0;
 }
 
 int anchor_ns_set_compare(const struct anchor_ns_set *parent, const struct anchor_ns_set *child) {

@@ -3148,7 +3148,7 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
 	struct anchor_ns_set *old_set = anchor_ns_cache_get(qstate->env->anchor_ns_cache, zone);
 	if (old_set == NULL) {
 		log_info("[First Time Trust] delegpt not in anchor_ns_cache");
-		set_add(qstate->env->anchor_ns_cache->zones, (const char*)new_set);
+		anchor_ns_cache_set(qstate->env->anchor_ns_cache, new_set);
 	} else {
 		log_info("[Trust Anchor Check] delegpt in anchor_ns_cache");
 		if (anchor_ns_set_compare(old_set, new_set) == 0) {
@@ -3488,6 +3488,7 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 				ie->outbound_msg_retry);
 		delegpt_log(VERB_ALGO, iq->dp);
 
+		// TODO: check if the zone is in monitor list
 		check_anchor_ns(qstate, iq);
 
 		/* Count this as a referral. */

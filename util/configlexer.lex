@@ -597,6 +597,7 @@ proxy-protocol-port{COLON}	{ YDVAR(1, VAR_PROXY_PROTOCOL_PORT) }
 iter-scrub-ns{COLON}		{ YDVAR(1, VAR_ITER_SCRUB_NS) }
 iter-scrub-cname{COLON}		{ YDVAR(1, VAR_ITER_SCRUB_CNAME) }
 max-global-quota{COLON}		{ YDVAR(1, VAR_MAX_GLOBAL_QUOTA) }
+anchor-zones-file{COLON} 	{ YDVAR(1, VAR_ANCHOR_ZONES_FILE) }
 <INITIAL,val>{NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++; }
 
 	/* Quoted strings. Strip leading and ending quotes */
@@ -722,7 +723,7 @@ max-global-quota{COLON}		{ YDVAR(1, VAR_MAX_GLOBAL_QUOTA) }
 
 {UNQUOTEDLETTER_NOCOLON}*	{
 	ub_c_error_msg("unknown keyword '%s'", yytext);
-	}
+}
 
 <*>.	{
 	ub_c_error_msg("stray '%s'", yytext);

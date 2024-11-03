@@ -48,4 +48,12 @@ void anchor_ns_log(const struct anchor_ns *ns);
 uint64_t anchor_ns_set_hash(const char* key);
 uint64_t anchor_ns_hash(const char *key);
 
+// HELPER FUNCTIONS
+/**
+ * Converts a domain to a fully qualified domain name
+ * User should make sure there is enough space in the domain
+ * @param domain the domain to convert
+ * @return void
+ */
+void to_fqdn(char *domain);
 #endif // SERVICES_CACHE_ANCHOR_NS_H

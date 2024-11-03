@@ -20,7 +20,7 @@ extern "C" {
 
 #include <inttypes.h>       /* uint64_t */
 #include <stdlib.h>
-
+#include "config.h"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alternate-Keywords.html#Alternate-Keywords */
 #ifndef __GNUC__
