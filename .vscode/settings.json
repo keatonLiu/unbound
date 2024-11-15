@@ -25,6 +25,7 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "map.h": "c",
-        "rbtree.h": "c"
+        "rbtree.h": "c",
+        "rrdef.h": "c"
     }
 }

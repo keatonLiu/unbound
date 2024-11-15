@@ -30,6 +30,7 @@ struct anchor_ns_set
 
 struct anchor_ns_set* anchor_ns_set_create();
 struct anchor_ns_set* anchor_ns_set_from_rep(const char* zone, const struct reply_info *rep);
+int anchor_ns_set_free(struct anchor_ns_set *set);
 struct anchor_ns* anchor_ns_set_get(const struct anchor_ns_set* set, const char* name);
 struct anchor_ns* anchor_ns_set_add(const struct anchor_ns_set* set, struct anchor_ns* ns);
 int anchor_ns_set_equal(const struct anchor_ns_set *parent, const struct anchor_ns_set *child);

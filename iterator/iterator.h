@@ -389,6 +389,10 @@ struct iter_qstate {
 	/** the parent-side-glue element (NULL if none, its first match) */
 	struct ub_packed_rrset_key* pside_glue;
 
+	int query_for_real_ns_set;
+	/** the NS set from parent */
+	struct anchor_ns_set *new_set;
+
 	/** If nonNULL we are walking upwards from DS query to find NS */
 	uint8_t* dsns_point;
 	/** length of the dname in dsns_point */

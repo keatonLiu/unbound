@@ -3133,7 +3133,7 @@ find_NS(struct reply_info* rep, size_t from, size_t to)
 }
 
 
-int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
+int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq, int id, int *should_ask_old) {
 	char zone[LDNS_MAX_DOMAINLEN+1];
 	dname_str(iq->dp->name, zone);
 	if (!in_anchor_zones_list(qstate->env->cfg->anchor_zones_file, zone)) {
@@ -3153,10 +3153,15 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
 	if (old_set == NULL) {
 		log_info("[First Time Trust] delegpt not in anchor_ns_cache");
 		anchor_ns_cache_set(qstate->env->anchor_ns_cache, new_set);
+		return 1;
 	} else {
 		log_info("[Trust Anchor Check] delegpt in anchor_ns_cache");
+		// struct anchor_ns* ns = anchor_ns_create("ns1.baidu.com");
+		// map_insert(ns->ips, "1.1.1.1", "1.1.1.1");
+		// anchor_ns_set_add(new_set, ns);
 		if (anchor_ns_set_equal(old_set, new_set)) {
 			log_info("[Trust Anchor Check] delegpt not changed");
+			anchor_ns_set_free(new_set);
 			return 1;
 		} else {
 			log_warn("[Trust Anchor Check] delegpt changed");
@@ -3164,6 +3169,43 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq) {
 	}
 
 	// TODO: Ask old set to find the real NS set
+	struct sockaddr_in sa;
+	socklen_t len = (socklen_t)sizeof(sa);
+	memset(&sa, 0, len);
+	sa.sin_family = AF_INET;
+
+	struct delegpt* dp = delegpt_create(qstate->region);
+	delegpt_set_name(dp, qstate->region, iq->dp->name);
+	dp->ssl_upstream = iq->dp->ssl_upstream;
+	dp->tcp_upstream = iq->dp->tcp_upstream;
+	dp->has_parent_side_NS = 1;
+
+	map_node_type *node_ns;
+    RBTREE_FOR(node_ns, map_node_type *, old_set->nss.tree) {
+		const struct anchor_ns* ns = node_ns->data;
+		map_node_type *node_ip;
+		RBTREE_FOR(node_ip, map_node_type *, ns->ips.tree) {
+			const char* ip = node_ip->data;
+			if (!inet_pton(AF_INET, ip, &sa.sin_addr)) {
+				log_err("inet_pton failed: %s", ip);
+				continue;
+			}
+			// add addr to target list
+			delegpt_add_addr(dp, qstate->region, (struct sockaddr_storage*)&sa, len, 0, 0, NULL, 53, NULL);
+		}
+    }
+
+	struct module_qstate* subq;
+	if(!generate_sub_request(dp->name, dp->namelen, LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
+					qstate, id, iq, QUERYTARGETS_STATE, FINISHED_STATE, &subq, 0, 0))
+		return 0;
+	struct iter_qstate* sub_iq = (struct iter_qstate*)subq->minfo[id];
+	sub_iq->dp = dp;
+	sub_iq->query_for_real_ns_set = 1;
+	sub_iq->auth_zone_avoid = 1;
+	sub_iq->new_set = new_set;
+	*should_ask_old = 1;
+	return 0;
 }
 
 /** 
@@ -3492,9 +3534,11 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 				ie->outbound_msg_retry);
 		delegpt_log(VERB_ALGO, iq->dp);
 
-		// TODO: check if the zone is in monitor list
-		check_anchor_ns(qstate, iq);
-
+		int should_ask_old = 0;
+		check_anchor_ns(qstate, iq, id, &should_ask_old);
+		if (should_ask_old) {
+			return 0;
+		}
 		/* Count this as a referral. */
 		iq->referral_count++;
 		iq->sent_count = 0;
@@ -3856,6 +3900,27 @@ processTargetResponse(struct module_qstate* qstate, int id,
 		verbose(VERB_ALGO, "subq: parent not interested, was reset");
 		return; /* not interested anymore */
 	}
+
+	/* final compare for real anchor ns set and new set, 
+	 * will update the anchor ns cache and dp accordingly */
+	if (iq->query_for_real_ns_set) {
+		char zone[255];
+		dname_str(iq->dp->name, zone);
+		struct anchor_ns_set* real_set = anchor_ns_set_from_rep(zone, iq->response->rep);
+		/* update anchor ns cache */
+		anchor_ns_cache_set(qstate->env->anchor_ns_cache, real_set);
+		if (anchor_ns_set_equal(real_set, iq->new_set)) {
+			log_info("[Trust Anchor Check] Smooth Migration");
+		} else {
+			log_err("[Trust Anchor Check] NOT Smooth Migration, using real ns set");
+			/* not need to free old dp ns, cause it is allocated in the module_qstate region,
+			and will be freed when the module_qstate is freed */
+			foriq->dp = delegpt_from_message(iq->response, forq->region);
+			/* parent will continue at process query targets state, so use new delegation point */
+		}
+		return;  // ns list is null, skip duplicate check
+	}
+
 	dpns = delegpt_find_ns(foriq->dp, qstate->qinfo.qname,
 			qstate->qinfo.qname_len);
 	if(!dpns) {
@@ -4561,6 +4626,7 @@ iter_clear(struct module_qstate* qstate, int id)
 			free(iq->nxns_dp);
 		}
 		iq->num_current_queries = 0;
+		anchor_ns_set_free(iq->new_set);
 	}
 	qstate->minfo[id] = NULL;
 }

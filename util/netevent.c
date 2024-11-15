@@ -1115,6 +1115,7 @@ comm_point_udp_callback(int fd, short event, void* arg)
 		rep.remote_addrlen = (socklen_t)sizeof(rep.remote_addr);
 		log_assert(fd != -1);
 		log_assert(sldns_buffer_remaining(rep.c->buffer) > 0);
+		// 接收响应到rep的buffer里面
 		rcv = recvfrom(fd, (void*)sldns_buffer_begin(rep.c->buffer),
 			sldns_buffer_remaining(rep.c->buffer), MSG_DONTWAIT,
 			(struct sockaddr*)&rep.remote_addr, &rep.remote_addrlen);
@@ -1150,14 +1151,16 @@ comm_point_udp_callback(int fd, short event, void* arg)
 				rep.remote_addrlen);
 		}
 
+		// 检查回调函数合法性（是否在白名单，是否为空）
 		fptr_ok(fptr_whitelist_comm_point(rep.c->callback));
+		// 回调里面可以对响应进一步处理
 		if((*rep.c->callback)(rep.c, rep.c->cb_arg, NETEVENT_NOERROR, &rep)) {
-			/* send back immediate reply */
 #ifdef USE_DNSCRYPT
 			buffer = rep.c->dnscrypt_buffer;
 #else
 			buffer = rep.c->buffer;
 #endif
+			/* 这里调完响应callback之后立即发送响应，响应就在rep.c->buffer里面 */
 			(void)comm_point_send_udp_msg(rep.c, buffer,
 				(struct sockaddr*)&rep.remote_addr,
 				rep.remote_addrlen, 0);

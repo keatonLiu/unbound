@@ -53,9 +53,15 @@ void* map_pop(const struct map map, const void* key) {
 
 void map_delete(const struct map map) {
     map_node_type* node;
+    
     if (map.tree) {
+        struct map_node_type* nodes[map.tree->count];
+        int i = 0;
         RBTREE_FOR(node, map_node_type*, map.tree) {
-            free(node);
+            nodes[i++] = node;
+        }
+        for (i = 0; i < map.tree->count; i++) {
+            free(nodes[i]);
         }
         free(map.tree);
     }

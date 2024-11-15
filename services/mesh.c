@@ -1087,7 +1087,7 @@ void mesh_detach_subs(struct module_qstate* qstate)
 #else
 		(void)
 #endif
-		rbtree_delete(&ref->s->super_set, &lookup);
+		rbtree_delete(&ref->s->super_set, &lookup); // 遍历所有依赖的子节点，从其被依赖集合中删除当前节点(detach1)
 		log_assert(n != NULL); /* must have been present */
 		if(!ref->s->reply_list && !ref->s->cb_list
 			&& ref->s->super_set.count == 0) {
@@ -1096,6 +1096,7 @@ void mesh_detach_subs(struct module_qstate* qstate)
 				mesh->num_reply_states <= mesh->all.count);
 		}
 	}
+	// 从当前节点的依赖集合中删除所有子节点(detach2)
 	rbtree_init(&qstate->mesh_info->sub_set, &mesh_state_ref_compare);
 }
 
@@ -1581,6 +1582,7 @@ void mesh_query_done(struct mesh_state* mstate)
 				r_buffer = r->query_reply.c->tcp_req_info->spool_buffer;
 				prev_buffer = NULL;
 			}
+			// 不需要drop，发送响应给客户端
 			mesh_send_reply(mstate, mstate->s.return_rcode, rep,
 				r, r_buffer, prev, prev_buffer);
 			if(r->query_reply.c->tcp_req_info) {
@@ -1900,7 +1902,7 @@ mesh_continue(struct mesh_area* mesh, struct mesh_state* mstate,
 #endif
 				memset(&addr, 0, sizeof(addr));
 
-			mesh_query_done(mstate);
+			mesh_query_done(mstate); // 这里发响应给客户端
 			mesh_walk_supers(mesh, mstate);
 
 			/* If the answer to the query needs to be refetched
@@ -1968,6 +1970,7 @@ void mesh_run(struct mesh_area* mesh, struct mesh_state* mstate,
 		ev = module_event_pass;
 		if(mesh->run.count > 0) {
 			/* pop random element off the runnable tree */
+			/* mstate becomes the next query */
 			mstate = (struct mesh_state*)mesh->run.root->key;
 			(void)rbtree_delete(&mesh->run, mstate);
 		} else mstate = NULL;

@@ -64,13 +64,15 @@ int anchor_ns_set_equal(const struct anchor_ns_set *parent, const struct anchor_
                 break;
             }
         }
+    } else {
+        equal = 0;
     }
 
     if (equal == 0) {
         log_warn("anchor_ns_set: parent and child NSs are not equal");
-        log_warn("Old NSs:");
+        log_info("Old NSs:");
         anchor_ns_set_log(parent);
-        log_warn("New NSs:");
+        log_info("New NSs:");
         anchor_ns_set_log(child);
         return 0;
     }
@@ -94,7 +96,7 @@ struct anchor_ns_set *anchor_ns_set_from_rep(const char* zone, const struct repl
     }
     strcpy((char *)set->zone, zone);
     size_t i;
-    for (i= rep->an_numrrsets; i<rep->an_numrrsets+rep->ns_numrrsets; i++) {
+    for (i= 0; i<rep->an_numrrsets+rep->ns_numrrsets; i++) {
         struct ub_packed_rrset_key *rrset = rep->rrsets[i];
         struct packed_rrset_data *data = (struct packed_rrset_data *)rrset->entry.data;
         size_t j;
@@ -154,6 +156,27 @@ struct anchor_ns_set *anchor_ns_set_from_rep(const char* zone, const struct repl
         }
     }
     return set;
+}
+
+int anchor_ns_set_free(struct anchor_ns_set *set) {
+    if (set == NULL) {
+        return 0;
+    }
+    map_node_type *node;
+    RBTREE_FOR(node, map_node_type *, set->nss.tree) {
+        struct anchor_ns *ns = (struct anchor_ns *)node->data;
+        map_node_type *ip_node;
+        RBTREE_FOR(ip_node, map_node_type *, ns->ips.tree) {
+            free((char *)ip_node->data);
+        }
+        map_delete(ns->ips);
+        free(ns->name);
+        free(ns);
+    }
+    free(set->zone);
+    map_delete(set->nss);
+    free(set);
+    return 1;
 }
 
 struct anchor_ns *anchor_ns_create(const char *name) {
