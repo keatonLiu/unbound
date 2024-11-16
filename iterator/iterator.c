@@ -133,6 +133,7 @@ iter_deinit(struct module_env* env, int id)
 	}
 	free(iter_env);
 	env->modinfo[id] = NULL;
+	
 }
 
 /** new query for iterator */
@@ -3141,7 +3142,7 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq, int id
 	}
 
 	log_info("[Anchor NS Check] delegation point: %s", zone);
-	struct anchor_ns_set* new_set = anchor_ns_set_from_rep(zone, iq->response->rep);
+	struct anchor_ns_set* new_set = anchor_ns_set_from_rep(zone, iq->response->rep, qstate->region);
 	if (new_set == NULL) {
 		log_err("parse rep to anchor ns set failed");
 		return 0;
@@ -3197,8 +3198,10 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq, int id
 
 	struct module_qstate* subq;
 	if(!generate_sub_request(dp->name, dp->namelen, LDNS_RR_TYPE_NS, LDNS_RR_CLASS_IN,
-					qstate, id, iq, QUERYTARGETS_STATE, FINISHED_STATE, &subq, 0, 0))
+					qstate, id, iq, QUERYTARGETS_STATE, FINISHED_STATE, &subq, 0, 0)){
+		anchor_ns_set_free(new_set);
 		return 0;
+	}
 	struct iter_qstate* sub_iq = (struct iter_qstate*)subq->minfo[id];
 	sub_iq->dp = dp;
 	sub_iq->query_for_real_ns_set = 1;
@@ -3906,9 +3909,9 @@ processTargetResponse(struct module_qstate* qstate, int id,
 	if (iq->query_for_real_ns_set) {
 		char zone[255];
 		dname_str(iq->dp->name, zone);
-		struct anchor_ns_set* real_set = anchor_ns_set_from_rep(zone, iq->response->rep);
+		struct anchor_ns_set* real_set = anchor_ns_set_from_rep(zone, iq->response->rep, forq->region);
 		/* update anchor ns cache */
-		anchor_ns_cache_set(qstate->env->anchor_ns_cache, real_set);
+		anchor_ns_cache_set(forq->env->anchor_ns_cache, real_set);
 		if (anchor_ns_set_equal(real_set, iq->new_set)) {
 			log_info("[Trust Anchor Check] Smooth Migration");
 		} else {

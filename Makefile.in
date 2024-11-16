@@ -737,7 +737,7 @@ rrset.lo rrset.o: $(srcdir)/services/cache/rrset.c config.h $(srcdir)/services/c
  $(srcdir)/util/alloc.h $(srcdir)/util/net_help.h
 anchor_ns.lo anchor_ns.o: $(srcdir)/services/cache/anchor_ns.c config.h $(srcdir)/services/cache/anchor_ns.h \
  $(srcdir)/util/storage/map.h $(srcdir)/util/data/msgreply.h $(srcdir)/util/log.h $(srcdir)/util/net_help.h \
- $(srcdir)/iterator/iter_delegpt.h $(srcdir)/util/data/dname.h $(srcdir)/sldns/sbuffer.h
+ $(srcdir)/iterator/iter_delegpt.h $(srcdir)/util/data/dname.h $(srcdir)/sldns/sbuffer.h $(srcdir)/util/regional.h
 as112.lo as112.o: $(srcdir)/util/as112.c $(srcdir)/util/as112.h
 dname.lo dname.o: $(srcdir)/util/data/dname.c config.h $(srcdir)/util/data/dname.h \
  $(srcdir)/util/storage/lruhash.h $(srcdir)/util/locks.h $(srcdir)/util/log.h $(srcdir)/util/data/msgparse.h \

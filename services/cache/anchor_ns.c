@@ -6,6 +6,7 @@
 #include "util/log.h"
 #include "util/net_help.h"
 #include "util/data/dname.h"
+#include "util/regional.h"
 #include "sldns/sbuffer.h"
 
 struct anchor_ns_cache *anchor_ns_cache_create() {
@@ -24,6 +25,17 @@ struct anchor_ns_set* anchor_ns_cache_get(const struct anchor_ns_cache* cache, c
 
 struct anchor_ns_set* anchor_ns_cache_set(const struct anchor_ns_cache *cache, struct anchor_ns_set *set) {
     return (struct anchor_ns_set*)map_insert(cache->zones, set->zone, set);
+}
+
+int anchor_ns_cache_free(struct anchor_ns_cache *cache) {
+    map_node_type *node;
+    RBTREE_FOR(node, map_node_type *, cache->zones.tree) {
+        struct anchor_ns_set *set = (struct anchor_ns_set *)node->data;
+        anchor_ns_set_free(set);
+    }
+    map_delete(cache->zones);
+    free(cache);
+    return 1;
 }
 
 struct anchor_ns_set *anchor_ns_set_create() {
@@ -84,7 +96,7 @@ struct anchor_ns* anchor_ns_set_add(const struct anchor_ns_set* set, struct anch
     return (struct anchor_ns*)map_insert(set->nss, ns->name, ns);
 }
 
-struct anchor_ns_set *anchor_ns_set_from_rep(const char* zone, const struct reply_info *rep) {
+struct anchor_ns_set *anchor_ns_set_from_rep(const char* zone, const struct reply_info *rep, struct regional* region) {
     struct anchor_ns_set *set = anchor_ns_set_create();
     if (set == NULL) {
         return NULL;
@@ -137,7 +149,8 @@ struct anchor_ns_set *anchor_ns_set_from_rep(const char* zone, const struct repl
                 memmove(&sa.sin_addr, data->rr_data[j]+2, INET_SIZE);
                 char dest[100];
                 inet_ntop(AF_INET, &sa.sin_addr, dest, (socklen_t)sizeof(dest));
-                char *ip = calloc(strlen(dest) + 1, sizeof(char));
+                /* allocated ips at region, so we don't need to free them */
+                char *ip = regional_alloc(region, strlen(dest) + 1);
                 if (ip == NULL) {
                     log_warn("Failed to allocate memory for ip");
                     return NULL;
@@ -165,11 +178,8 @@ int anchor_ns_set_free(struct anchor_ns_set *set) {
     map_node_type *node;
     RBTREE_FOR(node, map_node_type *, set->nss.tree) {
         struct anchor_ns *ns = (struct anchor_ns *)node->data;
-        map_node_type *ip_node;
-        RBTREE_FOR(ip_node, map_node_type *, ns->ips.tree) {
-            free((char *)ip_node->data);
-        }
         map_delete(ns->ips);
+        /* no need to free each ip string, cause they were allocated at qstate region */
         free(ns->name);
         free(ns);
     }
@@ -247,3 +257,17 @@ void anchor_ns_log(const struct anchor_ns *ns) {
     }
 }
 
+int anchor_ns_free(struct anchor_ns *ns) {
+    if (ns == NULL) {
+        return 0;
+    }
+    map_node_type *node;
+    /* no need to free each ip string, cause they were allocated at qstate region */
+    // RBTREE_FOR(node, map_node_type *, ns->ips.tree) {
+        // free((char *)node->data);
+    // }
+    map_delete(ns->ips);
+    free(ns->name);
+    free(ns);
+    return 1;
+}
