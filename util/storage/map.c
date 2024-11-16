@@ -23,7 +23,15 @@ void* map_insert(const struct map map, void* key, void* data) {
     }
     node->node.key = key;
     node->data = data;
-    rbnode_type* rbnode = rbtree_insert(map.tree, &node->node);
+    // find the node in the tree
+    rbnode_type* rbnode = rbtree_search(map.tree, key);
+    if (rbnode) {
+        map_node_type *old_node = (map_node_type*)rbnode;
+        old_node->data = data;
+        free(node);
+        return data;
+    }
+    rbnode = rbtree_insert(map.tree, &node->node);
     if (!rbnode) {
         log_warn("map_insert: key already present");
         return NULL;

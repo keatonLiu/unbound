@@ -1063,7 +1063,7 @@ void daemon_apply_cfg(struct daemon* daemon, struct config_file* cfg)
 		cfg))==0)
 		fatal_exit("malloc failure updating config settings");
 	
-	if ((daemon->env->anchor_ns_cache = anchor_ns_cache_create()) == NULL) {
+	if ((daemon->env->anchor_ns_cache = anchor_ns_cache_create(cfg->anchor_zones_db)) == NULL) {
 		fatal_exit("malloc failure creating anchor_ns_cache");
 	}
 }

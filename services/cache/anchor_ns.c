@@ -9,13 +9,34 @@
 #include "util/regional.h"
 #include "sldns/sbuffer.h"
 
-struct anchor_ns_cache *anchor_ns_cache_create() {
+struct anchor_ns_cache *anchor_ns_cache_create(const char* db_path) {
     struct anchor_ns_cache *cache = (struct anchor_ns_cache *)calloc(1, sizeof(struct anchor_ns_cache));
     if (!cache) {
         log_warn("anchor_ns_cache: memory allocation failed");
         return NULL;
     }
     map_init(&cache->zones, default_cmp_func_str); // key = zone
+    cache->db_path = db_path;
+    log_info("Opening database: %s", db_path);
+    if (sqlite3_open(db_path, &cache->db) != SQLITE_OK) {
+        log_warn("Failed to open database: %s", sqlite3_errmsg(cache->db));
+        return NULL;
+    }
+
+    const char *sql = 
+        "CREATE TABLE IF NOT EXISTS zone ("
+        "    id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "    name TEXT NOT NULL"
+        ");"
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_name ON zone(name);";
+    char *err_msg = NULL;
+    int rc = sqlite3_exec(cache->db, sql, 0, 0, &err_msg);
+    if (rc != SQLITE_OK) {
+        log_err("Failed to create table: %s", err_msg);
+        sqlite3_free(err_msg);
+        sqlite3_close(cache->db);
+        return NULL;
+    }
     return cache;
 }
 
@@ -28,6 +49,7 @@ struct anchor_ns_set* anchor_ns_cache_set(const struct anchor_ns_cache *cache, s
 }
 
 int anchor_ns_cache_free(struct anchor_ns_cache *cache) {
+    sqlite3_close(cache->db);
     map_node_type *node;
     RBTREE_FOR(node, map_node_type *, cache->zones.tree) {
         struct anchor_ns_set *set = (struct anchor_ns_set *)node->data;
@@ -79,17 +101,7 @@ int anchor_ns_set_equal(const struct anchor_ns_set *parent, const struct anchor_
     } else {
         equal = 0;
     }
-
-    if (equal == 0) {
-        log_warn("anchor_ns_set: parent and child NSs are not equal");
-        log_info("Old NSs:");
-        anchor_ns_set_log(parent);
-        log_info("New NSs:");
-        anchor_ns_set_log(child);
-        return 0;
-    }
-
-    return 1;
+    return equal;
 }
 
 struct anchor_ns* anchor_ns_set_add(const struct anchor_ns_set* set, struct anchor_ns* ns){
@@ -218,24 +230,29 @@ void to_fqdn(char *domain) {
     }
 }
 
-int in_anchor_zones_list(const char *zonefile, const char *zone) {
-    FILE *file = fopen(zonefile, "r");
-    if (file == NULL) {
-        perror("Failed to open file");
-        return -1;
-    }
-    char line[256];
-    while (fgets(line, sizeof(line), file) != NULL) {
-        line[strcspn(line, "\n")] = '\0';
-        to_fqdn(line);
-        if (strcmp(line, zone) == 0) {
-            fclose(file);
-            return 1; 
-        }
+int in_anchor_zones_list(sqlite3 *db, const char *zone) {
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT 1 FROM zone WHERE name = ? LIMIT 1";
+
+    // 准备 SQL 查询
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        return false;
     }
 
-    fclose(file);
-    return 0;
+    // 绑定参数
+    if (sqlite3_bind_text(stmt, 1, zone, -1, SQLITE_STATIC) != SQLITE_OK) {
+        fprintf(stderr, "Failed to bind parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return false;
+    }
+
+    // 执行查询并检查结果
+    bool exists = (sqlite3_step(stmt) == SQLITE_ROW);
+    
+    // 清理
+    sqlite3_finalize(stmt);
+    return exists;
 }
 
 

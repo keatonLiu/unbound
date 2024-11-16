@@ -779,8 +779,8 @@ struct config_file {
 	int iter_scrub_cname;
 	/** limit on upstream queries for an incoming query and subqueries. */
 	int max_global_quota;
-	/** Anchor NS zones file */
-	char* anchor_zones_file;
+	/** Anchor NS zones sqlite3 db */
+	char* anchor_zones_db;
 };
 
 /** from cfg username, after daemonize setup performed */

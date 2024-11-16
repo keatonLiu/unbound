@@ -3137,7 +3137,8 @@ find_NS(struct reply_info* rep, size_t from, size_t to)
 int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq, int id, int *should_ask_old) {
 	char zone[LDNS_MAX_DOMAINLEN+1];
 	dname_str(iq->dp->name, zone);
-	if (!in_anchor_zones_list(qstate->env->cfg->anchor_zones_file, zone)) {
+	if (!in_anchor_zones_list(qstate->env->anchor_ns_cache->db, zone)) {
+		verbose(VERB_ALGO, "[Anchor NS Check] delegpt not in anchor_ns_cache");
 		return 1;
 	}
 
@@ -3166,6 +3167,10 @@ int check_anchor_ns(struct module_qstate* qstate, struct iter_qstate* iq, int id
 			return 1;
 		} else {
 			log_warn("[Trust Anchor Check] delegpt changed");
+			log_info("Old NSs:");
+			anchor_ns_set_log(old_set);
+			log_info("New NSs:");
+			anchor_ns_set_log(new_set);
 		}
 	}
 
@@ -3911,11 +3916,16 @@ processTargetResponse(struct module_qstate* qstate, int id,
 		dname_str(iq->dp->name, zone);
 		struct anchor_ns_set* real_set = anchor_ns_set_from_rep(zone, iq->response->rep, forq->region);
 		/* update anchor ns cache */
+		log_info("[Trust Anchor Check] Update anchor ns cache");
 		anchor_ns_cache_set(forq->env->anchor_ns_cache, real_set);
 		if (anchor_ns_set_equal(real_set, iq->new_set)) {
 			log_info("[Trust Anchor Check] Smooth Migration");
 		} else {
 			log_err("[Trust Anchor Check] NOT Smooth Migration, using real ns set");
+			log_info("Real NSs:");
+			anchor_ns_set_log(real_set);
+			log_info("New NSs:");
+			anchor_ns_set_log(iq->new_set);
 			/* not need to free old dp ns, cause it is allocated in the module_qstate region,
 			and will be freed when the module_qstate is freed */
 			foriq->dp = delegpt_from_message(iq->response, forq->region);

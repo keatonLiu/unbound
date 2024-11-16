@@ -209,7 +209,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_LOG_DESTADDR VAR_CACHEDB_CHECK_WHEN_SERVE_EXPIRED
 %token VAR_COOKIE_SECRET_FILE VAR_ITER_SCRUB_NS VAR_ITER_SCRUB_CNAME
 %token VAR_MAX_GLOBAL_QUOTA VAR_HARDEN_UNVERIFIED_GLUE VAR_LOG_TIME_ISO
-%token VAR_ANCHOR_ZONES_FILE
+%token VAR_ANCHOR_ZONES_DB
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -350,7 +350,7 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_harden_unknown_additional | server_disable_edns_do |
 	server_log_destaddr | server_cookie_secret_file |
 	server_iter_scrub_ns | server_iter_scrub_cname | server_max_global_quota |
-	server_harden_unverified_glue | server_log_time_iso | server_anchor_zones_file
+	server_harden_unverified_glue | server_log_time_iso | server_anchor_zones_db
 	;
 stub_clause: stubstart contents_stub
 	{
@@ -4107,11 +4107,11 @@ server_max_global_quota: VAR_MAX_GLOBAL_QUOTA STRING_ARG
 		free($2);
 	}
 	;
-server_anchor_zones_file: VAR_ANCHOR_ZONES_FILE STRING_ARG
+server_anchor_zones_db: VAR_ANCHOR_ZONES_DB STRING_ARG
 	{
-		OUTYY(("P(server_anchor_zones_file:%s)\n", $2));
-		free(cfg_parser->cfg->anchor_zones_file);
-		cfg_parser->cfg->anchor_zones_file = $2;
+		OUTYY(("P(server_anchor_zones_db:%s)\n", $2));
+		free(cfg_parser->cfg->anchor_zones_db);
+		cfg_parser->cfg->anchor_zones_db = $2;
 	}
 	;
 ipsetstart: VAR_IPSET

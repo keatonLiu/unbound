@@ -27,6 +27,7 @@
         "map.h": "c",
         "rbtree.h": "c",
         "rrdef.h": "c",
-        "regional.h": "c"
+        "regional.h": "c",
+        "sqlite3.h": "c"
     }
 }

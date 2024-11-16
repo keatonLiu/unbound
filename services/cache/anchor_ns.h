@@ -3,6 +3,9 @@
 #include "config.h" // must include to get the correct platform-specific headers
 #include "util/storage/map.h"
 #include "util/data/msgreply.h"
+#include "util/storage/sqlite/sqlite3.h"
+#include <stdbool.h>
+
 struct anchor_ns_set;
 struct anchor_ns_cache;
 struct anchor_ns;
@@ -13,9 +16,11 @@ struct anchor_ns;
 struct anchor_ns_cache
 {
     struct map zones; // zone -> ns_map
+    sqlite3* db;
+    const char* db_path;
 };
 
-struct anchor_ns_cache* anchor_ns_cache_create();
+struct anchor_ns_cache* anchor_ns_cache_create(const char* db_path);
 struct anchor_ns_set* anchor_ns_cache_get(const struct anchor_ns_cache* cache, const char* zone);
 struct anchor_ns_set* anchor_ns_cache_set(const struct anchor_ns_cache* cache, struct anchor_ns_set* set);
 int anchor_ns_cache_free(struct anchor_ns_cache *cache);
@@ -57,5 +62,5 @@ int anchor_ns_free(struct anchor_ns *ns);
  * @return void
  */
 void to_fqdn(char *domain);
-int in_anchor_zones_list(const char *zonefile, const char *zone);
+int in_anchor_zones_list(sqlite3 *db, const char *zone);
 #endif // SERVICES_CACHE_ANCHOR_NS_H

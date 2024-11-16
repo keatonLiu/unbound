@@ -417,7 +417,7 @@ config_create(void)
 	cfg->iter_scrub_ns = 20;
 	cfg->iter_scrub_cname = 11;
 	cfg->max_global_quota = 128;
-	cfg->anchor_zones_file = NULL;
+	cfg->anchor_zones_db = NULL;
 	return cfg;
 error_exit:
 	config_delete(cfg);
@@ -1066,6 +1066,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	}
 	fptr_ok(fptr_whitelist_print_func(func));
 	O_DEC(opt, "verbosity", verbosity)
+	else O_STR(opt, "anchor-zones-db", anchor_zones_db)
 	else O_DEC(opt, "statistics-interval", stat_interval)
 	else O_YNO(opt, "statistics-cumulative", stat_cumulative)
 	else O_YNO(opt, "extended-statistics", stat_extended)
@@ -1757,6 +1758,7 @@ config_delete(struct config_file* cfg)
 	config_delstrlist(cfg->ipsecmod_whitelist);
 #endif
 	free(cfg->cookie_secret_file);
+	free(cfg->anchor_zones_db);
 #ifdef USE_CACHEDB
 	free(cfg->cachedb_backend);
 	free(cfg->cachedb_secret);
