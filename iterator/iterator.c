@@ -3930,6 +3930,17 @@ processTargetResponse(struct module_qstate* qstate, int id,
 			and will be freed when the module_qstate is freed */
 			foriq->dp = delegpt_from_message(iq->response, forq->region);
 			/* parent will continue at process query targets state, so use new delegation point */
+			// TODO: change parent cache
+			log_info("[Trust Anchor Check] Update NS cache");
+			size_t i;
+			for(i=0; i<iq->response->rep->rrset_count; i++) {
+				struct ub_packed_rrset_key* rrset= iq->response->rep->rrsets[i];
+				struct packed_rrset_data* new_d = rrset->entry.data;
+				new_d->trust = rrset_trust_validated; // force this record to overwrite
+			}
+			iter_dns_store(qstate->env, &foriq->response->qinfo,
+				iq->response->rep, 1, 0, 0, NULL, 0,
+				qstate->qstarttime);
 		}
 		return;  // ns list is null, skip duplicate check
 	}

@@ -5,11 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Unbound(gdb)", //I named it Pusk because i can 
+            "name": "Unbound(gdb)",
             "type": "cppdbg",
             "request": "launch",
             "program": "/usr/local/sbin/unbound", //path to your programs exe and exe name
-            "args": ["-d", "-vvvv"],
+            "args": ["-d", "-vvvv"], // do not fork into the background.
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build",
+        },
+        {
+            "name": "Unbound(release)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/local/sbin/unbound", //path to your programs exe and exe name
+            "args": ["-d"], // do not fork into the background.
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

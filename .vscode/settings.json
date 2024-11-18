@@ -28,6 +28,7 @@
         "rbtree.h": "c",
         "rrdef.h": "c",
         "regional.h": "c",
-        "sqlite3.h": "c"
+        "sqlite3.h": "c",
+        "wire2str.h": "c"
     }
 }

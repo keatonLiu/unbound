@@ -50,6 +50,7 @@
 #include "util/regional.h"
 #include "util/alloc.h"
 #include "util/net_help.h"
+#include "sldns/wire2str.h"
 
 void
 rrset_markdel(void* key)
@@ -140,14 +141,14 @@ need_to_update_rrset(void* nd, void* cd, time_t timenow, int equal, int ns)
 	if( cached->security == sec_status_bogus && 
 		newd->security != sec_status_bogus && !equal)
 		return 1;
-        /*      o if new RRset is more trustworthy - insert it */
-        if( newd->trust > cached->trust ) {
+	/*      o if new RRset is more trustworthy - insert it */
+	if( newd->trust > cached->trust ) {
 		/* if the cached rrset is bogus, and new is equal,
 		 * do not update the TTL - let it expire. */
 		if(equal && cached->ttl >= timenow && 
 			cached->security == sec_status_bogus)
 			return 0;
-                return 1;
+		return 1;
 	}
 	/*	o item in cache has expired */
 	if( cached->ttl < timenow )
@@ -228,6 +229,19 @@ rrset_cache_update(struct rrset_cache* r, struct rrset_ref* ref,
 		 * cache size values nicely. */
 	}
 	log_assert(ref->key->id != 0);
+
+	// log
+	char buf[256];
+	dname_str(k->rk.dname, buf);
+	char* nm, *tp, *cl;
+	nm = sldns_wire2str_dname(k->rk.dname, k->rk.dname_len);
+	tp = sldns_wire2str_type(ntohs(k->rk.type));
+	cl = sldns_wire2str_class(ntohs(k->rk.rrset_class));
+	log_info("rrset_cache_update: %s %s %s %d", nm, cl, tp, (int)k->rk.flags);
+	free(nm);
+	free(tp);
+	free(cl);
+	
 	slabhash_insert(&r->table, h, &k->entry, k->entry.data, alloc);
 	if(e) {
 		/* For NSEC, NSEC3, DNAME, when rdata is updated, update 
