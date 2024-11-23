@@ -1112,6 +1112,8 @@ server:
 	# Timeout in milliseconds for TCP queries to auth servers.
 	# tcp-auth-query-timeout: 3000
 
+	# Anchor NS Zones sqlite3 db file, use absolute path
+	anchor-zones-db: "/usr/local/etc/unbound/zones.db"
 
 # Python config section. To enable:
 # o use --with-pythonmodule to configure before compiling.
