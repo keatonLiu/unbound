@@ -231,16 +231,16 @@ rrset_cache_update(struct rrset_cache* r, struct rrset_ref* ref,
 	log_assert(ref->key->id != 0);
 
 	// log
-	char buf[256];
-	dname_str(k->rk.dname, buf);
-	char* nm, *tp, *cl;
-	nm = sldns_wire2str_dname(k->rk.dname, k->rk.dname_len);
-	tp = sldns_wire2str_type(ntohs(k->rk.type));
-	cl = sldns_wire2str_class(ntohs(k->rk.rrset_class));
-	log_info("rrset_cache_update: %s %s %s %d", nm, cl, tp, (int)k->rk.flags);
-	free(nm);
-	free(tp);
-	free(cl);
+	// char buf[256];
+	// dname_str(k->rk.dname, buf);
+	// char* nm, *tp, *cl;
+	// nm = sldns_wire2str_dname(k->rk.dname, k->rk.dname_len);
+	// tp = sldns_wire2str_type(ntohs(k->rk.type));
+	// cl = sldns_wire2str_class(ntohs(k->rk.rrset_class));
+	// log_info("rrset_cache_update: %s %s %s %d", nm, cl, tp, (int)k->rk.flags);
+	// free(nm);
+	// free(tp);
+	// free(cl);
 	
 	slabhash_insert(&r->table, h, &k->entry, k->entry.data, alloc);
 	if(e) {
