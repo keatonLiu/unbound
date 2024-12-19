@@ -164,6 +164,21 @@ struct iter_env {
 
 	/** max number of query restarts to limit length of CNAME chain */
 	int max_query_restarts;
+
+	/** anchor ns check mode: loose strict */
+	int anchor_ns_check_mode;
+};
+
+/**
+ * The anchor ns check mode.
+ * This is used to determine how to handle the case when the old
+ * anchor nses failed to respond.
+ */
+enum anchor_ns_check_modes {
+	/** loose mode, do not disturb the parent query, use parent returned NS */
+	ANCHOR_CHECK_LOOSE = 0,
+	/** strict mode, force to return servfail */
+	ANCHOR_CHECK_STRICT
 };
 
 /**

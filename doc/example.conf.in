@@ -1114,6 +1114,8 @@ server:
 
 	# Anchor NS Zones sqlite3 db file, use absolute path
 	anchor-zones-db: "/usr/local/etc/unbound/zones.db"
+	# Anchor NS check mode, either "loose" or "strict"
+	anchor-ns-check-mode: "loose"
 
 # Python config section. To enable:
 # o use --with-pythonmodule to configure before compiling.

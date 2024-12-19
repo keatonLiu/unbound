@@ -3912,6 +3912,18 @@ processTargetResponse(struct module_qstate* qstate, int id,
 	/* final compare for real anchor ns set and new set, 
 	 * will update the anchor ns cache and dp accordingly */
 	if (iq->query_for_real_ns_set) {
+		// check rcode
+		if (qstate->return_rcode != LDNS_RCODE_NOERROR) {
+			log_err("[Trust Anchor Check] Real NS set query failed, rcode: %d", qstate->return_rcode);
+			if (ie->anchor_ns_check_mode == ANCHOR_CHECK_STRICT) {
+				// strict mode, force return error
+				foriq->state = FINISHED_STATE;
+				foriq->response = NULL;
+				return;
+			}
+			// loose mode, do not disturb the parent query
+			return;
+		}
 		char zone[255];
 		dname_str(iq->dp->name, zone);
 		struct anchor_ns_set* real_set = anchor_ns_set_from_rep(zone, iq->response->rep, forq->region);

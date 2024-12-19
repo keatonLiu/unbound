@@ -598,6 +598,7 @@ iter-scrub-ns{COLON}		{ YDVAR(1, VAR_ITER_SCRUB_NS) }
 iter-scrub-cname{COLON}		{ YDVAR(1, VAR_ITER_SCRUB_CNAME) }
 max-global-quota{COLON}		{ YDVAR(1, VAR_MAX_GLOBAL_QUOTA) }
 anchor-zones-db{COLON} 		{ YDVAR(1, VAR_ANCHOR_ZONES_DB) }
+anchor-ns-check-mode{COLON} { YDVAR(1, VAR_ANCHOR_NS_CHECK_MODE) }
 <INITIAL,val>{NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++; }
 
 	/* Quoted strings. Strip leading and ending quotes */

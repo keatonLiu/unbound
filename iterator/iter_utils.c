@@ -207,6 +207,15 @@ iter_apply_cfg(struct iter_env* iter_env, struct config_file* cfg)
 	iter_env->outbound_msg_retry = cfg->outbound_msg_retry;
 	iter_env->max_sent_count = cfg->max_sent_count;
 	iter_env->max_query_restarts = cfg->max_query_restarts;
+	iter_env->anchor_ns_check_mode = ANCHOR_CHECK_LOOSE;
+	if (strcmp(cfg->anchor_ns_check_mode, "strict") == 0) {
+		iter_env->anchor_ns_check_mode = ANCHOR_CHECK_STRICT;
+	} else if (strcmp(cfg->anchor_ns_check_mode, "loose") == 0) {
+		iter_env->anchor_ns_check_mode = ANCHOR_CHECK_LOOSE;
+	} else {
+		log_warn("anchor-ns-check must be 'strict' or 'loose', not '%s', defaulting to 'loose'", 
+			cfg->anchor_ns_check_mode);
+	}
 	return 1;
 }
 

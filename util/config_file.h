@@ -781,6 +781,8 @@ struct config_file {
 	int max_global_quota;
 	/** Anchor NS zones sqlite3 db */
 	char* anchor_zones_db;
+	/** Anchor NS check mode: strict loose */
+	char* anchor_ns_check_mode;
 };
 
 /** from cfg username, after daemonize setup performed */

@@ -41,6 +41,9 @@ struct anchor_ns* anchor_ns_set_get(const struct anchor_ns_set* set, const char*
 struct anchor_ns* anchor_ns_set_add(const struct anchor_ns_set* set, struct anchor_ns* ns);
 int anchor_ns_set_equal(const struct anchor_ns_set *parent, const struct anchor_ns_set *child);
 
+/**
+ * The anchor ns structure, stores all IPs for a NS name
+ */
 struct anchor_ns
 {
     char* name;

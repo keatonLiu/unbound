@@ -418,6 +418,7 @@ config_create(void)
 	cfg->iter_scrub_cname = 11;
 	cfg->max_global_quota = 128;
 	cfg->anchor_zones_db = NULL;
+	cfg->anchor_ns_check_mode = strdup("loose");
 	return cfg;
 error_exit:
 	config_delete(cfg);
@@ -1067,6 +1068,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	fptr_ok(fptr_whitelist_print_func(func));
 	O_DEC(opt, "verbosity", verbosity)
 	else O_STR(opt, "anchor-zones-db", anchor_zones_db)
+	else O_STR(opt, "anchor-ns-check-mode", anchor_ns_check_mode)
 	else O_DEC(opt, "statistics-interval", stat_interval)
 	else O_YNO(opt, "statistics-cumulative", stat_cumulative)
 	else O_YNO(opt, "extended-statistics", stat_extended)
